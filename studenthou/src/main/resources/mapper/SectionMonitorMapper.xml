@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aquaguardian.mapper.SectionMonitorMapper">
+  <select id="findAll" resultType="com.aquaguardian.entity.SectionMonitor">
+    SELECT * FROM section_monitor ORDER BY id DESC
+  </select>
+
+  <select id="findById" resultType="com.aquaguardian.entity.SectionMonitor" parameterType="int">
+    SELECT * FROM section_monitor WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.aquaguardian.entity.SectionMonitor">
+    INSERT INTO section_monitor
+      (monitor_point_name, reservoir_name, year, month, oxygen, potassium_permanganate, cod, flow, water_depth, total_nitrogen, total_phosphorus)
+    VALUES
+      (#{monitorPointName}, #{reservoirName}, #{year}, #{month}, #{oxygen}, #{potassiumPermanganate}, #{cod}, #{flow}, #{waterDepth}, #{totalNitrogen}, #{totalPhosphorus})
+  </insert>
+
+  <update id="update" parameterType="com.aquaguardian.entity.SectionMonitor">
+    UPDATE section_monitor
+    SET monitor_point_name = #{monitorPointName},
+        reservoir_name = #{reservoirName},
+        year = #{year},
+        month = #{month},
+        oxygen = #{oxygen},
+        potassium_permanganate = #{potassiumPermanganate},
+        cod = #{cod},
+        flow = #{flow},
+        water_depth = #{waterDepth},
+        total_nitrogen = #{totalNitrogen},
+        total_phosphorus = #{totalPhosphorus}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById" parameterType="long">
+    DELETE FROM section_monitor WHERE id = #{id}
+  </delete>
+
+  <select id="findByCondition" resultType="com.aquaguardian.entity.SectionMonitor">
+    SELECT * FROM section_monitor
+    <where>
+      <if test="monitorPointName != null and monitorPointName != ''">
+        AND monitor_point_name LIKE CONCAT('%', #{monitorPointName}, '%')
+      </if>
+      <if test="reservoirName != null and reservoirName != ''">
+        AND reservoir_name LIKE CONCAT('%', #{reservoirName}, '%')
+      </if>
+      <if test="year != null">
+        AND year = #{year}
+      </if>
+      <if test="month != null">
+        AND month = #{month}
+      </if>
+    </where>
+    ORDER BY id DESC
+  </select>
+</mapper> 
