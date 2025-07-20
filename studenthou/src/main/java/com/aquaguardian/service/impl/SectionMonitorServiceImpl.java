@@ -1,6 +1,7 @@
 package com.aquaguardian.service.impl;
 
 import com.aquaguardian.entity.SectionMonitor;
+import com.aquaguardian.entity.ImportResult;
 import com.aquaguardian.mapper.SectionMonitorMapper;
 import com.aquaguardian.service.SectionMonitorService;
 import com.github.pagehelper.PageHelper;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SectionMonitorServiceImpl implements SectionMonitorService {
@@ -31,12 +33,23 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
 
     @Override
     public SectionMonitor createSectionMonitor(SectionMonitor sectionMonitor) {
+        // 检查监测点名称是否重复
+        if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName())) {
+            throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 已存在，请使用其他名称！");
+        }
         sectionMonitorMapper.insert(sectionMonitor);
         return sectionMonitor;
     }
 
     @Override
     public SectionMonitor updateSectionMonitor(SectionMonitor sectionMonitor) {
+        // 更新时检查监测点名称是否重复（排除自己）
+        SectionMonitor existing = sectionMonitorMapper.findById(sectionMonitor.getId());
+        if (existing != null && !existing.getMonitorPointName().equals(sectionMonitor.getMonitorPointName())) {
+            if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName())) {
+                throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 已存在，请使用其他名称！");
+            }
+        }
         sectionMonitorMapper.update(sectionMonitor);
         return sectionMonitor;
     }
@@ -57,6 +70,11 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
     }
 
     @Override
+    public boolean isMonitorPointNameExists(String monitorPointName) {
+        return sectionMonitorMapper.countByMonitorPointName(monitorPointName) > 0;
+    }
+
+    @Override
     public List<SectionMonitor> importFromExcel(MultipartFile file) throws IOException {
         List<SectionMonitor> list = new ArrayList<>();
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
@@ -66,7 +84,7 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
                 String monitorPointName = getStringCellValue(row.getCell(0));
-                // 跳过监测点名称为空、为“示例名称”或“实例名称”的行
+                // 跳过监测点名称为空、为"示例名称"或"实例名称"的行
                 if (monitorPointName == null || monitorPointName.trim().isEmpty() ||
                     "示例名称".equals(monitorPointName.trim()) || "实例名称".equals(monitorPointName.trim())) {
                     continue;
@@ -101,50 +119,95 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
         return list;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ImportResult<SectionMonitor> batchImportFromExcel(MultipartFile file) throws IOException {
+        List<SectionMonitor> list = new ArrayList<>();
+        List<String> duplicateMonitorPoints = new ArrayList<>();
+        
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            // 从第1行开始遍历（含表头），但只处理真实数据
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String monitorPointName = getStringCellValue(row.getCell(0));
+                // 跳过监测点名称为空、为"示例名称"或"实例名称"的行
+                if (monitorPointName == null || monitorPointName.trim().isEmpty() ||
+                    "示例名称".equals(monitorPointName.trim()) || "实例名称".equals(monitorPointName.trim())) {
+                    continue;
+                }
+                
+                // 检查监测点名称是否已存在
+                if (isMonitorPointNameExists(monitorPointName)) {
+                    duplicateMonitorPoints.add(monitorPointName);
+                    continue; // 跳过重复的监测点名称
+                }
+                
+                SectionMonitor sm = new SectionMonitor();
+                sm.setMonitorPointName(monitorPointName);
+                sm.setReservoirName(getStringCellValue(row.getCell(1)));
+                sm.setYear(getIntCellValue(row.getCell(2)));
+                sm.setMonth(getIntCellValue(row.getCell(3)));
+                sm.setOxygen(getBigDecimalCellValue(row.getCell(4)));
+                sm.setPotassiumPermanganate(getBigDecimalCellValue(row.getCell(5)));
+                sm.setCod(getBigDecimalCellValue(row.getCell(6)));
+                sm.setFlow(getBigDecimalCellValue(row.getCell(7)));
+                sm.setWaterDepth(getBigDecimalCellValue(row.getCell(8)));
+                sm.setTotalNitrogen(getBigDecimalCellValue(row.getCell(9)));
+                sm.setTotalPhosphorus(getBigDecimalCellValue(row.getCell(10)));
+                list.add(sm);
+            }
+        }
+        
+        // 校验
+        for (int i = 0; i < list.size(); i++) {
+            SectionMonitor sm = list.get(i);
+            if (sm.getMonitorPointName() == null || sm.getMonitorPointName().trim().isEmpty()) {
+                throw new RuntimeException("第" + (i + 2) + "行监测点名称不能为空，导入失败！");
+            }
+        }
+        
+        // 批量插入
+        if (!list.isEmpty()) {
+            sectionMonitorMapper.batchInsert(list);
+        }
+        
+        // 构建导入结果
+        String message = "导入成功";
+        if (!duplicateMonitorPoints.isEmpty()) {
+            String duplicateNames = String.join(", ", duplicateMonitorPoints);
+            message = "导入成功，跳过重复监测点名称：" + duplicateNames;
+            System.out.println("批量导入时跳过重复监测点名称：" + duplicateNames);
+        }
+        
+        return new ImportResult<>(list, duplicateMonitorPoints, message, true);
+    }
+
     private String getStringCellValue(Cell cell) {
         if (cell == null) return null;
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue().trim();
-            case NUMERIC:
-                double d = cell.getNumericCellValue();
-                // 判断是否为整数
-                if (d == (long) d) {
-                    return String.valueOf((long) d);
-                } else {
-                    return String.valueOf(d);
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                try {
-                    return cell.getStringCellValue().trim();
-                } catch (Exception e) {
-                    try {
-                        return String.valueOf(cell.getNumericCellValue());
-                    } catch (Exception ex) {
-                        return null;
-                    }
-                }
-            default:
-                return null;
-        }
+        DataFormatter formatter = new DataFormatter();
+        String value = formatter.formatCellValue(cell);
+        return value.trim().isEmpty() ? null : value.trim();
     }
-    private BigDecimal getBigDecimalCellValue(Cell cell) {
-        String value = getStringCellValue(cell);
-        if (value == null || value.isEmpty()) return null;
+
+    private Integer getIntCellValue(Cell cell) {
+        if (cell == null) return null;
         try {
-            return new BigDecimal(value);
+            DataFormatter formatter = new DataFormatter();
+            String value = formatter.formatCellValue(cell).trim();
+            return value.isEmpty() ? null : Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return null;
         }
     }
-    private Integer getIntCellValue(Cell cell) {
-        String value = getStringCellValue(cell);
-        if (value == null || value.isEmpty()) return null;
+
+    private BigDecimal getBigDecimalCellValue(Cell cell) {
+        if (cell == null) return null;
         try {
-            // 处理Excel数字后缀.0
-            return Integer.parseInt(value.replaceAll("\\.0+$", ""));
+            DataFormatter formatter = new DataFormatter();
+            String value = formatter.formatCellValue(cell).trim();
+            return value.isEmpty() ? null : new BigDecimal(value);
         } catch (NumberFormatException e) {
             return null;
         }

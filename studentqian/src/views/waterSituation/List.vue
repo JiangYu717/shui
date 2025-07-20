@@ -1,8 +1,18 @@
 <template>
   <div class="water-situation-list">
     <div class="page-header">
-      <h2>水情数据管理</h2>
-      <el-button type="primary" @click="handleAdd">新增水情数据</el-button>
+      <h2>水情管理</h2>
+      <div class="header-actions">
+        <el-button type="success" @click="handleImport">
+          <el-icon><upload /></el-icon>
+          数据导入
+        </el-button>
+        <el-button type="warning" @click="handleExport">
+          <el-icon><download /></el-icon>
+          数据导出
+        </el-button>
+        <el-button type="primary" @click="handleAdd">新增</el-button>
+      </div>
     </div>
     <el-form :inline="true" :model="searchForm" class="search-form" @submit.prevent>
       <el-form-item label="库名">
@@ -10,6 +20,46 @@
       </el-form-item>
       <el-form-item label="日期">
         <el-date-picker v-model="searchForm.date" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" clearable @change="handleSearch" />
+      </el-form-item>
+      <el-form-item label="蓄水量范围">
+        <el-input-number 
+          v-model="searchForm.storageMin" 
+          placeholder="最小值" 
+          :min="0" 
+          :step="500"
+          style="width: 120px;"
+          clearable
+        />
+        <span style="margin: 0 8px;">-</span>
+        <el-input-number 
+          v-model="searchForm.storageMax" 
+          placeholder="最大值" 
+          :min="0" 
+          :step="500"
+          style="width: 120px;"
+          clearable
+        />
+        <span style="margin-left: 8px; color: #909399; font-size: 12px;">(万立方米，步长500)</span>
+      </el-form-item>
+      <el-form-item label="总库容范围">
+        <el-input-number 
+          v-model="searchForm.totalCapacityMin" 
+          placeholder="最小值" 
+          :min="0" 
+          :step="500"
+          style="width: 120px;"
+          clearable
+        />
+        <span style="margin: 0 8px;">-</span>
+        <el-input-number 
+          v-model="searchForm.totalCapacityMax" 
+          placeholder="最大值" 
+          :min="0" 
+          :step="500"
+          style="width: 120px;"
+          clearable
+        />
+        <span style="margin-left: 8px; color: #909399; font-size: 12px;">(万立方米，步长500)</span>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -46,10 +96,16 @@
         @current-change="handleCurrentChange"
       />
     </div>
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="700px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="180px">
         <el-form-item label="库名" prop="reservoirName">
-          <el-input v-model="form.reservoirName" placeholder="请输入库名" />
+          <el-input 
+            v-model="form.reservoirName" 
+            placeholder="请输入库名" 
+            @blur="checkReservoirNameDuplicate"
+            :class="{ 'is-error': reservoirNameError }"
+          />
+          <div v-if="reservoirNameError" class="error-message">库名已存在，请使用其他库名</div>
         </el-form-item>
         <el-form-item label="日期" prop="date">
           <el-date-picker v-model="form.date" type="datetime" placeholder="请选择日期" value-format="YYYY-MM-DD HH:mm:ss" />
@@ -79,7 +135,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button type="primary" @click="handleSubmit" :disabled="reservoirNameError">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -87,9 +143,21 @@
 </template>
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getWaterSituationList, addWaterSituation, updateWaterSituation, deleteWaterSituation } from '@/api/waterSituation'
-const searchForm = reactive({ reservoirName: '', date: '' })
+import { Upload, Download } from '@element-plus/icons-vue'
+import { fetchWaterSituationList, createWaterSituation, updateWaterSituation, deleteWaterSituation, checkReservoirName } from '@/api/waterSituation'
+
+const router = useRouter()
+
+const searchForm = reactive({ 
+  reservoirName: '', 
+  date: '', 
+  storageMin: null, 
+  storageMax: null, 
+  totalCapacityMin: null, 
+  totalCapacityMax: null 
+})
 const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -98,6 +166,9 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const formRef = ref(null)
+const reservoirNameError = ref(false)
+const originalReservoirName = ref('')
+
 const form = reactive({
   id: '',
   reservoirName: '',
@@ -110,17 +181,47 @@ const form = reactive({
   totalCapacity: null,
   floodLevel: null
 })
+
 const rules = {
   reservoirName: [{ required: true, message: '请输入库名', trigger: 'blur' }],
   date: [{ required: true, message: '请选择日期', trigger: 'change' }]
 }
+
+// 检查库名是否重复
+async function checkReservoirNameDuplicate() {
+  if (!form.reservoirName || form.reservoirName.trim() === '') {
+    reservoirNameError.value = false
+    return
+  }
+  
+  // 如果是编辑模式且库名没有改变，不检查
+  if (form.id && form.reservoirName === originalReservoirName.value) {
+    reservoirNameError.value = false
+    return
+  }
+  
+  try {
+    const response = await checkReservoirName(form.reservoirName)
+    // 根据我们的 request.js 配置，返回的数据在 response.data 中
+    reservoirNameError.value = response.data
+  } catch (error) {
+    console.error('检查库名失败:', error)
+    // 发生错误时，重置错误状态，允许用户继续操作
+    reservoirNameError.value = false
+  }
+}
+
 function handleSearch() {
   loading.value = true
-  getWaterSituationList({
+  fetchWaterSituationList({
     page: currentPage.value,
     pageSize: pageSize.value,
     reservoirName: searchForm.reservoirName,
-    date: searchForm.date
+    date: searchForm.date,
+    storageMin: searchForm.storageMin,
+    storageMax: searchForm.storageMax,
+    totalCapacityMin: searchForm.totalCapacityMin,
+    totalCapacityMax: searchForm.totalCapacityMax
   }).then(res => {
     tableData.value = res.data.list
     total.value = res.data.total
@@ -132,6 +233,10 @@ function handleSearch() {
 function resetSearch() {
   searchForm.reservoirName = ''
   searchForm.date = ''
+  searchForm.storageMin = null
+  searchForm.storageMax = null
+  searchForm.totalCapacityMin = null
+  searchForm.totalCapacityMax = null
   handleSearch()
 }
 
@@ -148,12 +253,16 @@ function handleAdd() {
     totalCapacity: null,
     floodLevel: null
   })
+  originalReservoirName.value = ''
+  reservoirNameError.value = false
   dialogTitle.value = '新增水情数据'
   dialogVisible.value = true
 }
 
 function handleEdit(row) {
   Object.assign(form, row)
+  originalReservoirName.value = row.reservoirName
+  reservoirNameError.value = false
   dialogTitle.value = '编辑水情数据'
   dialogVisible.value = true
 }
@@ -169,7 +278,15 @@ function handleDelete(row) {
     })
 }
 
-function handleSubmit() {
+async function handleSubmit() {
+  // 提交前重新检查库名
+  await checkReservoirNameDuplicate()
+  
+  if (reservoirNameError.value) {
+    ElMessage.error('库名已存在，请使用其他库名')
+    return
+  }
+  
   formRef.value.validate().then(() => {
     // 格式化日期为 yyyy-MM-dd HH:mm:ss
     if (form.date && typeof form.date === 'string') {
@@ -185,17 +302,22 @@ function handleSubmit() {
         form[key] = null
       }
     })
+    
     if (form.id) {
       updateWaterSituation(form).then(() => {
         ElMessage.success('修改成功')
         dialogVisible.value = false
         handleSearch()
+      }).catch(error => {
+        ElMessage.error(error.message || '修改失败')
       })
     } else {
-      addWaterSituation(form).then(() => {
+      createWaterSituation(form).then(() => {
         ElMessage.success('新增成功')
         dialogVisible.value = false
         handleSearch()
+      }).catch(error => {
+        ElMessage.error(error.message || '新增失败')
       })
     }
   })
@@ -203,7 +325,6 @@ function handleSubmit() {
 
 function handleSizeChange(val) {
   pageSize.value = val
-  currentPage.value = 1
   handleSearch()
 }
 
@@ -212,13 +333,80 @@ function handleCurrentChange(val) {
   handleSearch()
 }
 
+// 数据导入
+function handleImport() {
+  // 跳转到导入页面
+  router.push('/waterSituation/import')
+}
+
+// 数据导出
+function handleExport() {
+  // 跳转到导出页面
+  router.push('/waterSituation/export')
+}
+
 onMounted(() => {
   handleSearch()
 })
 </script>
+
 <style scoped>
-.water-situation-list { padding: 24px; }
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.search-form { margin-bottom: 16px; }
-.pagination { margin-top: 16px; text-align: right; }
+.water-situation-list {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-form {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.error-message {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.is-error {
+  border-color: #f56c6c;
+}
+
+/* 优化模态框表单布局 */
+:deep(.el-form-item__label) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+:deep(.el-input-number) {
+  width: 100%;
+}
+
+:deep(.el-date-picker) {
+  width: 100%;
+}
 </style> 

@@ -7,24 +7,14 @@
     text-color="#bfcbd9"
     active-text-color="#409EFF"
     router>
-    <el-sub-menu index="/waterSituation">
-      <template #title>
-        <el-icon><WaterMeter /></el-icon>
-        <span>水情管理</span>
-      </template>
-      <el-menu-item index="/waterSituation/list">数据管理</el-menu-item>
-      <el-menu-item index="/waterSituation/import">数据导入</el-menu-item>
-      <el-menu-item index="/waterSituation/export">数据导出</el-menu-item>
-    </el-sub-menu>
-    <el-sub-menu index="/sectionMonitor">
-      <template #title>
-        <el-icon><WaterMeter /></el-icon>
-        <span>监测断面管理</span>
-      </template>
-      <el-menu-item index="/sectionMonitor/list">数据管理</el-menu-item>
-      <el-menu-item index="/sectionMonitor/import">数据导入</el-menu-item>
-      <el-menu-item index="/sectionMonitor/export">数据导出</el-menu-item>
-    </el-sub-menu>
+    <el-menu-item index="/waterSituation/list">
+      <el-icon><WaterMeter /></el-icon>
+      <span>水情管理</span>
+    </el-menu-item>
+    <el-menu-item index="/sectionMonitor/list">
+      <el-icon><WaterMeter /></el-icon>
+      <span>监测断面管理</span>
+    </el-menu-item>
   </el-menu>
 </template>
 
@@ -40,6 +30,12 @@ export default {
     const isCollapse = ref(false)
 
     const activeMenu = computed(() => {
+      // 根据当前路径确定激活的菜单项
+      if (route.path.startsWith('/waterSituation')) {
+        return '/waterSituation/list'
+      } else if (route.path.startsWith('/sectionMonitor')) {
+        return '/sectionMonitor/list'
+      }
       return route.path
     })
 

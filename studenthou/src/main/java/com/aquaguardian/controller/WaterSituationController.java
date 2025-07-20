@@ -1,6 +1,7 @@
 package com.aquaguardian.controller;
 
 import com.aquaguardian.entity.WaterSituation;
+import com.aquaguardian.entity.ImportResult;
 import com.aquaguardian.service.WaterSituationService;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,12 @@ public class WaterSituationController {
     public PageInfo<WaterSituation> list(@RequestParam(defaultValue = "1") int page,
                                          @RequestParam(defaultValue = "10") int pageSize,
                                          @RequestParam(required = false) String reservoirName,
-                                         @RequestParam(required = false) String date) {
-        return waterSituationService.getWaterSituations(page, pageSize, reservoirName, date);
+                                         @RequestParam(required = false) String date,
+                                         @RequestParam(required = false) Double storageMin,
+                                         @RequestParam(required = false) Double storageMax,
+                                         @RequestParam(required = false) Double totalCapacityMin,
+                                         @RequestParam(required = false) Double totalCapacityMax) {
+        return waterSituationService.getWaterSituations(page, pageSize, reservoirName, date, storageMin, storageMax, totalCapacityMin, totalCapacityMax);
     }
 
     @PostMapping("/create")
@@ -57,6 +62,16 @@ public class WaterSituationController {
     @PostMapping("/import")
     public List<WaterSituation> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
         return waterSituationService.importFromExcel(file);
+    }
+
+    @PostMapping("/batchImport")
+    public ImportResult<WaterSituation> batchImportExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        return waterSituationService.batchImportFromExcel(file);
+    }
+
+    @GetMapping("/checkReservoirName")
+    public boolean checkReservoirName(@RequestParam String reservoirName) {
+        return waterSituationService.isReservoirNameExists(reservoirName);
     }
 
     @GetMapping("/export")

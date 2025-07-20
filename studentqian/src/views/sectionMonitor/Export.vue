@@ -36,6 +36,7 @@
 
 <script>
 import { exportSectionMonitor } from '@/api/sectionMonitor'
+import { ElMessage } from 'element-plus'
 export default {
   name: 'SectionMonitorExport',
   data() {
@@ -50,7 +51,7 @@ export default {
   methods: {
     handleExport() {
       // 可根据form参数传递给后端，当前仅实现格式选择
-      exportSectionMonitor(this.form.format).then(res => {
+      exportSectionMonitor({ format: this.form.format }).then(res => {
         const ext = this.form.format === 'csv' ? 'csv' : 'xlsx'
         const blob = res.data
         const url = window.URL.createObjectURL(blob)
@@ -59,6 +60,9 @@ export default {
         link.download = `section_monitor_export.${ext}`
         link.click()
         window.URL.revokeObjectURL(url)
+      }).catch(error => {
+        console.error('导出失败:', error)
+        ElMessage.error('导出失败：' + (error.message || '未知错误'))
       })
     }
   }

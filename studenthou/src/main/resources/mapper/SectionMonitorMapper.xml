@@ -55,4 +55,19 @@
     </where>
     ORDER BY id DESC
   </select>
+  
+  <!-- 检查监测点名称是否存在 -->
+  <select id="countByMonitorPointName" resultType="int" parameterType="string">
+    SELECT COUNT(*) FROM section_monitor WHERE monitor_point_name = #{monitorPointName}
+  </select>
+  
+  <!-- 批量插入 -->
+  <insert id="batchInsert" parameterType="java.util.List">
+    INSERT INTO section_monitor
+      (monitor_point_name, reservoir_name, year, month, oxygen, potassium_permanganate, cod, flow, water_depth, total_nitrogen, total_phosphorus)
+    VALUES
+    <foreach collection="list" item="item" separator=",">
+      (#{item.monitorPointName}, #{item.reservoirName}, #{item.year}, #{item.month}, #{item.oxygen}, #{item.potassiumPermanganate}, #{item.cod}, #{item.flow}, #{item.waterDepth}, #{item.totalNitrogen}, #{item.totalPhosphorus})
+    </foreach>
+  </insert>
 </mapper> 

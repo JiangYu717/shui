@@ -3,7 +3,7 @@ package com.aquaguardian.entity;
 import java.math.BigDecimal;
 
 public class SectionMonitor {
-    private Integer id;
+    private Long id;
     private String monitorPointName;
     private String reservoirName;
     private Integer year;
@@ -16,8 +16,8 @@ public class SectionMonitor {
     private BigDecimal totalNitrogen;
     private BigDecimal totalPhosphorus;
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getMonitorPointName() { return monitorPointName; }
     public void setMonitorPointName(String monitorPointName) { this.monitorPointName = monitorPointName; }
     public String getReservoirName() { return reservoirName; }

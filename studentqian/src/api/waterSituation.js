@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getWaterSituationList(params) {
+export function fetchWaterSituationList(params) {
   return request({
     url: '/api/waterSituation/list',
     method: 'get',
@@ -8,7 +8,7 @@ export function getWaterSituationList(params) {
   })
 }
 
-export function addWaterSituation(data) {
+export function createWaterSituation(data) {
   return request({
     url: '/api/waterSituation/create',
     method: 'post',
@@ -31,6 +31,13 @@ export function deleteWaterSituation(id) {
   })
 }
 
+export function getWaterSituationDetail(id) {
+  return request({
+    url: `/api/waterSituation/detail/${id}`,
+    method: 'get'
+  })
+}
+
 export function importWaterSituation(file) {
   const formData = new FormData()
   formData.append('file', file)
@@ -38,15 +45,46 @@ export function importWaterSituation(file) {
     url: '/api/waterSituation/import',
     method: 'post',
     data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   })
 }
 
-export function exportWaterSituation(format = 'xlsx') {
+export function batchImportWaterSituation(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/api/waterSituation/batchImport',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export function checkReservoirName(reservoirName) {
+  return request({
+    url: '/api/waterSituation/checkReservoirName',
+    method: 'get',
+    params: { reservoirName }
+  })
+}
+
+export function downloadTemplate() {
+  return request({
+    url: '/api/waterSituation/template/download',
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
+export function exportWaterSituation(params) {
   return request({
     url: '/api/waterSituation/export',
     method: 'get',
-    params: { format },
+    params,
     responseType: 'blob'
   })
 } 

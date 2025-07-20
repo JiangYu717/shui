@@ -34,7 +34,7 @@ service.interceptors.response.use(
     }
     // 如果响应数据为空，只在GET/POST且不是删除等操作时报错
     const method = response.config.method && response.config.method.toLowerCase()
-    if ((method === 'get' || method === 'post') && !response.data) {
+    if ((method === 'get' || method === 'post') && (response.data === null || response.data === undefined)) {
       return Promise.reject(new Error('服务器响应数据为空'))
     }
     // 返回实际的响应数据

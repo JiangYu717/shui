@@ -1,6 +1,7 @@
 package com.aquaguardian.controller;
 
 import com.aquaguardian.entity.SectionMonitor;
+import com.aquaguardian.entity.ImportResult;
 import com.aquaguardian.service.SectionMonitorService;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +65,18 @@ public class SectionMonitorController {
     }
 
     @PostMapping("/import")
-    public ResponseEntity<?> importSectionMonitor(@RequestParam("file") MultipartFile file) {
-        try {
-            sectionMonitorService.importFromExcel(file);
-            return ResponseEntity.ok().body("导入成功");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("导入失败: " + e.getMessage());
-        }
+    public List<SectionMonitor> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        return sectionMonitorService.importFromExcel(file);
+    }
+
+    @PostMapping("/batchImport")
+    public ImportResult<SectionMonitor> batchImportExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        return sectionMonitorService.batchImportFromExcel(file);
+    }
+
+    @GetMapping("/checkMonitorPointName")
+    public boolean checkMonitorPointName(@RequestParam String monitorPointName) {
+        return sectionMonitorService.isMonitorPointNameExists(monitorPointName);
     }
 
     @PostMapping("/export")
