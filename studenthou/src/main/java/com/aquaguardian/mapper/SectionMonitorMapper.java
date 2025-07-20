@@ -14,8 +14,8 @@ public interface SectionMonitorMapper {
     int deleteById(Long id);
     List<SectionMonitor> findByCondition(@Param("monitorPointName") String monitorPointName, @Param("reservoirName") String reservoirName, @Param("year") Integer year, @Param("month") Integer month);
     
-    // 检查监测点名称是否存在
-    int countByMonitorPointName(@Param("monitorPointName") String monitorPointName);
+    // 检查监测点名称是否存在（同一水库下）
+    int countByMonitorPointName(@Param("monitorPointName") String monitorPointName, @Param("reservoirName") String reservoirName);
     
     // 批量插入
     int batchInsert(@Param("list") List<SectionMonitor> list);

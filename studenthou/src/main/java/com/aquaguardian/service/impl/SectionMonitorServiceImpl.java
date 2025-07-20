@@ -33,9 +33,9 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
 
     @Override
     public SectionMonitor createSectionMonitor(SectionMonitor sectionMonitor) {
-        // 检查监测点名称是否重复
-        if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName())) {
-            throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 已存在，请使用其他名称！");
+        // 检查监测点名称是否重复（同一水库下）
+        if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName(), sectionMonitor.getReservoirName())) {
+            throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 在该水库下已存在，请使用其他名称！");
         }
         sectionMonitorMapper.insert(sectionMonitor);
         return sectionMonitor;
@@ -43,11 +43,11 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
 
     @Override
     public SectionMonitor updateSectionMonitor(SectionMonitor sectionMonitor) {
-        // 更新时检查监测点名称是否重复（排除自己）
+        // 更新时检查监测点名称是否重复（同一水库下，排除自己）
         SectionMonitor existing = sectionMonitorMapper.findById(sectionMonitor.getId());
-        if (existing != null && !existing.getMonitorPointName().equals(sectionMonitor.getMonitorPointName())) {
-            if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName())) {
-                throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 已存在，请使用其他名称！");
+        if (existing != null && (!existing.getMonitorPointName().equals(sectionMonitor.getMonitorPointName()) || !existing.getReservoirName().equals(sectionMonitor.getReservoirName()))) {
+            if (isMonitorPointNameExists(sectionMonitor.getMonitorPointName(), sectionMonitor.getReservoirName())) {
+                throw new RuntimeException("监测点名称 '" + sectionMonitor.getMonitorPointName() + "' 在该水库下已存在，请使用其他名称！");
             }
         }
         sectionMonitorMapper.update(sectionMonitor);
@@ -70,8 +70,8 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
     }
 
     @Override
-    public boolean isMonitorPointNameExists(String monitorPointName) {
-        return sectionMonitorMapper.countByMonitorPointName(monitorPointName) > 0;
+    public boolean isMonitorPointNameExists(String monitorPointName, String reservoirName) {
+        return sectionMonitorMapper.countByMonitorPointName(monitorPointName, reservoirName) > 0;
     }
 
     @Override
@@ -132,21 +132,21 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
                 String monitorPointName = getStringCellValue(row.getCell(0));
+                String reservoirName = getStringCellValue(row.getCell(1));
                 // 跳过监测点名称为空、为"示例名称"或"实例名称"的行
                 if (monitorPointName == null || monitorPointName.trim().isEmpty() ||
                     "示例名称".equals(monitorPointName.trim()) || "实例名称".equals(monitorPointName.trim())) {
                     continue;
                 }
-                
-                // 检查监测点名称是否已存在
-                if (isMonitorPointNameExists(monitorPointName)) {
-                    duplicateMonitorPoints.add(monitorPointName);
+                // 检查监测点名称是否已存在（同一水库下）
+                if (isMonitorPointNameExists(monitorPointName, reservoirName)) {
+                    duplicateMonitorPoints.add(monitorPointName + "（" + reservoirName + "）");
                     continue; // 跳过重复的监测点名称
                 }
                 
                 SectionMonitor sm = new SectionMonitor();
                 sm.setMonitorPointName(monitorPointName);
-                sm.setReservoirName(getStringCellValue(row.getCell(1)));
+                sm.setReservoirName(reservoirName);
                 sm.setYear(getIntCellValue(row.getCell(2)));
                 sm.setMonth(getIntCellValue(row.getCell(3)));
                 sm.setOxygen(getBigDecimalCellValue(row.getCell(4)));
@@ -177,8 +177,8 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
         String message = "导入成功";
         if (!duplicateMonitorPoints.isEmpty()) {
             String duplicateNames = String.join(", ", duplicateMonitorPoints);
-            message = "导入成功，跳过重复监测点名称：" + duplicateNames;
-            System.out.println("批量导入时跳过重复监测点名称：" + duplicateNames);
+            message = "导入成功，跳过重复监测点名称（水库）：" + duplicateNames;
+            System.out.println("批量导入时跳过重复监测点名称（水库）：" + duplicateNames);
         }
         
         return new ImportResult<>(list, duplicateMonitorPoints, message, true);

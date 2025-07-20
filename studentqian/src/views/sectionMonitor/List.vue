@@ -75,7 +75,7 @@
             @blur="checkMonitorPointNameDuplicate"
             :class="{ 'is-error': monitorPointNameError }"
           />
-          <div v-if="monitorPointNameError" class="error-message">监测点名称已存在，请使用其他名称</div>
+          <div v-if="monitorPointNameError || errorMessage" class="error-message">{{ errorMessage || '监测点名称已存在，请使用其他名称' }}</div>
         </el-form-item>
         <el-form-item label="水库名称" prop="reservoirName">
           <el-input v-model="form.reservoirName" placeholder="请输入水库名称" />
@@ -146,7 +146,9 @@ export default {
       dialogVisible: false,
       dialogTitle: '',
       monitorPointNameError: false,
+      errorMessage: '',
       originalMonitorPointName: '',
+      originalReservoirName: '',
       form: {
         id: null,
         monitorPointName: '',
@@ -175,20 +177,18 @@ export default {
   methods: {
     // 检查监测点名称是否重复
     async checkMonitorPointNameDuplicate() {
-      if (!this.form.monitorPointName || this.form.monitorPointName.trim() === '') {
+      if (!this.form.monitorPointName || this.form.monitorPointName.trim() === '' || !this.form.reservoirName || this.form.reservoirName.trim() === '') {
         this.monitorPointNameError = false
         return
       }
-      
-      // 如果是编辑模式且监测点名称没有改变，不检查
-      if (this.form.id && this.form.monitorPointName === this.originalMonitorPointName) {
+      // 如果是编辑模式且监测点名称和水库名称都没有改变，不检查
+      if (this.form.id && this.form.monitorPointName === this.originalMonitorPointName && this.form.reservoirName === this.originalReservoirName) {
         this.monitorPointNameError = false
         return
       }
-      
       try {
-        const exists = await checkMonitorPointName(this.form.monitorPointName)
-        this.monitorPointNameError = exists
+        const res = await checkMonitorPointName(this.form.monitorPointName, this.form.reservoirName)
+        this.monitorPointNameError = res.data // 这里才是真正的布尔值
       } catch (error) {
         console.error('检查监测点名称失败:', error)
       }
@@ -214,6 +214,7 @@ export default {
         this.dialogTitle = '编辑监测断面数据'
         this.form = { ...row }
         this.originalMonitorPointName = row.monitorPointName
+        this.originalReservoirName = row.reservoirName
       } else {
         this.dialogTitle = '新增监测断面数据'
         this.form = {
@@ -231,13 +232,16 @@ export default {
           totalPhosphorus: ''
         }
         this.originalMonitorPointName = ''
+        this.originalReservoirName = ''
       }
       this.monitorPointNameError = false
+      this.errorMessage = ''
       this.dialogVisible = true
     },
     handleSubmit() {
       if (this.monitorPointNameError) {
-        ElMessage.error('监测点名称已存在，请使用其他名称')
+        this.errorMessage = '监测点名称已存在，请使用其他名称';
+        ElMessage.error(this.errorMessage)
         return
       }
       
@@ -248,16 +252,20 @@ export default {
               ElMessage.success('修改成功')
               this.dialogVisible = false
               this.fetchList()
+              this.errorMessage = ''
             }).catch(error => {
-              ElMessage.error(error.message || '修改失败')
+              this.errorMessage = error.response?.data?.message || error.message || '修改失败'
+              ElMessage.error(this.errorMessage)
             })
           } else {
             createSectionMonitor(this.form).then(() => {
               ElMessage.success('新增成功')
               this.dialogVisible = false
               this.fetchList()
+              this.errorMessage = ''
             }).catch(error => {
-              ElMessage.error(error.message || '新增失败')
+              this.errorMessage = error.response?.data?.message || error.message || '新增失败'
+              ElMessage.error(this.errorMessage)
             })
           }
         }

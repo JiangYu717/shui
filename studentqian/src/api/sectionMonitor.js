@@ -64,11 +64,11 @@ export function batchImportSectionMonitor(file) {
   })
 }
 
-export function checkMonitorPointName(monitorPointName) {
+export function checkMonitorPointName(monitorPointName, reservoirName) {
   return request({
     url: '/api/sectionMonitor/checkMonitorPointName',
     method: 'get',
-    params: { monitorPointName }
+    params: { monitorPointName, reservoirName }
   })
 }
 

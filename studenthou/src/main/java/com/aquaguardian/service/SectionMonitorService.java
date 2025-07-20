@@ -17,8 +17,8 @@ public interface SectionMonitorService {
     List<SectionMonitor> importFromExcel(MultipartFile file) throws IOException;
     void exportToFile(String filePath, String format) throws IOException;
     
-    // 检查监测点名称是否重复
-    boolean isMonitorPointNameExists(String monitorPointName);
+    // 检查监测点名称是否重复（同一水库下）
+    boolean isMonitorPointNameExists(String monitorPointName, String reservoirName);
     
     // 批量导入（改进版）
     ImportResult<SectionMonitor> batchImportFromExcel(MultipartFile file) throws IOException;

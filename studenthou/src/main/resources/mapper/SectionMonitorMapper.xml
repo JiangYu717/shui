@@ -6,7 +6,7 @@
     SELECT * FROM section_monitor ORDER BY id DESC
   </select>
 
-  <select id="findById" resultType="com.aquaguardian.entity.SectionMonitor" parameterType="int">
+  <select id="findById" resultType="com.aquaguardian.entity.SectionMonitor" parameterType="long">
     SELECT * FROM section_monitor WHERE id = #{id}
   </select>
 
@@ -56,9 +56,9 @@
     ORDER BY id DESC
   </select>
   
-  <!-- 检查监测点名称是否存在 -->
-  <select id="countByMonitorPointName" resultType="int" parameterType="string">
-    SELECT COUNT(*) FROM section_monitor WHERE monitor_point_name = #{monitorPointName}
+  <!-- 检查监测点名称是否存在（同一水库下） -->
+  <select id="countByMonitorPointName" resultType="int" parameterType="map">
+    SELECT COUNT(*) FROM section_monitor WHERE monitor_point_name = #{monitorPointName} AND reservoir_name = #{reservoirName}
   </select>
   
   <!-- 批量插入 -->

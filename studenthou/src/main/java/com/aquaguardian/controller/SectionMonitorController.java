@@ -75,8 +75,8 @@ public class SectionMonitorController {
     }
 
     @GetMapping("/checkMonitorPointName")
-    public boolean checkMonitorPointName(@RequestParam String monitorPointName) {
-        return sectionMonitorService.isMonitorPointNameExists(monitorPointName);
+    public boolean checkMonitorPointName(@RequestParam String monitorPointName, @RequestParam String reservoirName) {
+        return sectionMonitorService.isMonitorPointNameExists(monitorPointName, reservoirName);
     }
 
     @PostMapping("/export")
