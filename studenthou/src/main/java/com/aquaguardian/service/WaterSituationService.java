@@ -9,7 +9,13 @@ import java.util.List;
 
 public interface WaterSituationService {
     PageInfo<WaterSituation> getWaterSituations(int page, int pageSize, String reservoirName, String date, 
-                                               Double storageMin, Double storageMax, Double totalCapacityMin, Double totalCapacityMax);
+                                               Double waterLevelMin, Double waterLevelMax,
+                                               Double storageMin, Double storageMax, 
+                                               Double avgInflowMin, Double avgInflowMax,
+                                               Double avgOutflowMin, Double avgOutflowMax,
+                                               Double yoyIncreaseMin, Double yoyIncreaseMax,
+                                               Double totalCapacityMin, Double totalCapacityMax,
+                                               Double floodLevelMin, Double floodLevelMax);
     WaterSituation createWaterSituation(WaterSituation waterSituation);
     WaterSituation updateWaterSituation(WaterSituation waterSituation);
     void deleteWaterSituation(Integer id);

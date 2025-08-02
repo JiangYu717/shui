@@ -25,9 +25,17 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
     private SectionMonitorMapper sectionMonitorMapper;
 
     @Override
-    public PageInfo<SectionMonitor> getSectionMonitors(int page, int pageSize, String monitorPointName, String reservoirName, Integer year, Integer month) {
+    public PageInfo<SectionMonitor> getSectionMonitors(int page, int pageSize, String monitorPointName, String reservoirName, 
+                                                      Integer yearMin, Integer yearMax, Integer monthMin, Integer monthMax,
+                                                      Double oxygenMin, Double oxygenMax, Double potassiumPermanganateMin, Double potassiumPermanganateMax,
+                                                      Double codMin, Double codMax, Double flowMin, Double flowMax,
+                                                      Double waterDepthMin, Double waterDepthMax, Double totalNitrogenMin, Double totalNitrogenMax,
+                                                      Double totalPhosphorusMin, Double totalPhosphorusMax) {
         PageHelper.startPage(page, pageSize);
-        List<SectionMonitor> list = sectionMonitorMapper.findByCondition(monitorPointName, reservoirName, year, month);
+        List<SectionMonitor> list = sectionMonitorMapper.findByConditions(monitorPointName, reservoirName, 
+                yearMin, yearMax, monthMin, monthMax, oxygenMin, oxygenMax, potassiumPermanganateMin, potassiumPermanganateMax,
+                codMin, codMax, flowMin, flowMax, waterDepthMin, waterDepthMax, 
+                totalNitrogenMin, totalNitrogenMax, totalPhosphorusMin, totalPhosphorusMax);
         return new PageInfo<>(list);
     }
 

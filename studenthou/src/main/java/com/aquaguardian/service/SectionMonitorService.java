@@ -8,7 +8,12 @@ import java.io.IOException;
 import java.util.List;
 
 public interface SectionMonitorService {
-    PageInfo<SectionMonitor> getSectionMonitors(int page, int pageSize, String monitorPointName, String reservoirName, Integer year, Integer month);
+    PageInfo<SectionMonitor> getSectionMonitors(int page, int pageSize, String monitorPointName, String reservoirName, 
+                                               Integer yearMin, Integer yearMax, Integer monthMin, Integer monthMax,
+                                               Double oxygenMin, Double oxygenMax, Double potassiumPermanganateMin, Double potassiumPermanganateMax,
+                                               Double codMin, Double codMax, Double flowMin, Double flowMax,
+                                               Double waterDepthMin, Double waterDepthMax, Double totalNitrogenMin, Double totalNitrogenMax,
+                                               Double totalPhosphorusMin, Double totalPhosphorusMax);
     SectionMonitor createSectionMonitor(SectionMonitor sectionMonitor);
     SectionMonitor updateSectionMonitor(SectionMonitor sectionMonitor);
     void deleteSectionMonitor(Long id);

@@ -14,8 +14,13 @@ public interface WaterSituationMapper {
     int deleteById(@Param("id") Integer id);
     List<WaterSituation> findByReservoirNameAndDate(@Param("reservoirName") String reservoirName, @Param("date") String date);
     List<WaterSituation> findByConditions(@Param("reservoirName") String reservoirName, @Param("date") String date,
+                                         @Param("waterLevelMin") Double waterLevelMin, @Param("waterLevelMax") Double waterLevelMax,
                                          @Param("storageMin") Double storageMin, @Param("storageMax") Double storageMax,
-                                         @Param("totalCapacityMin") Double totalCapacityMin, @Param("totalCapacityMax") Double totalCapacityMax);
+                                         @Param("avgInflowMin") Double avgInflowMin, @Param("avgInflowMax") Double avgInflowMax,
+                                         @Param("avgOutflowMin") Double avgOutflowMin, @Param("avgOutflowMax") Double avgOutflowMax,
+                                         @Param("yoyIncreaseMin") Double yoyIncreaseMin, @Param("yoyIncreaseMax") Double yoyIncreaseMax,
+                                         @Param("totalCapacityMin") Double totalCapacityMin, @Param("totalCapacityMax") Double totalCapacityMax,
+                                         @Param("floodLevelMin") Double floodLevelMin, @Param("floodLevelMax") Double floodLevelMax);
     
     // 检查库名是否存在
     int countByReservoirName(@Param("reservoirName") String reservoirName);

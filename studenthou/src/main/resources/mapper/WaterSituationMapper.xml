@@ -24,17 +24,47 @@
       <if test="date != null and date != ''">
         AND DATE_FORMAT(date, '%Y-%m-%d') = #{date}
       </if>
+      <if test="waterLevelMin != null">
+        AND water_level >= #{waterLevelMin}
+      </if>
+      <if test="waterLevelMax != null">
+        AND water_level &lt;= #{waterLevelMax}
+      </if>
       <if test="storageMin != null">
         AND storage >= #{storageMin}
       </if>
       <if test="storageMax != null">
         AND storage &lt;= #{storageMax}
       </if>
+      <if test="avgInflowMin != null">
+        AND avg_inflow >= #{avgInflowMin}
+      </if>
+      <if test="avgInflowMax != null">
+        AND avg_inflow &lt;= #{avgInflowMax}
+      </if>
+      <if test="avgOutflowMin != null">
+        AND avg_outflow >= #{avgOutflowMin}
+      </if>
+      <if test="avgOutflowMax != null">
+        AND avg_outflow &lt;= #{avgOutflowMax}
+      </if>
+      <if test="yoyIncreaseMin != null">
+        AND yoy_increase >= #{yoyIncreaseMin}
+      </if>
+      <if test="yoyIncreaseMax != null">
+        AND yoy_increase &lt;= #{yoyIncreaseMax}
+      </if>
       <if test="totalCapacityMin != null">
         AND total_capacity >= #{totalCapacityMin}
       </if>
       <if test="totalCapacityMax != null">
         AND total_capacity &lt;= #{totalCapacityMax}
+      </if>
+      <if test="floodLevelMin != null">
+        AND flood_level >= #{floodLevelMin}
+      </if>
+      <if test="floodLevelMax != null">
+        AND flood_level &lt;= #{floodLevelMax}
       </if>
     </where>
     ORDER BY date DESC

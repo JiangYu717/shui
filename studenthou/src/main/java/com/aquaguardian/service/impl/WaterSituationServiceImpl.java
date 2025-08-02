@@ -28,9 +28,18 @@ public class WaterSituationServiceImpl implements WaterSituationService {
 
     @Override
     public PageInfo<WaterSituation> getWaterSituations(int page, int pageSize, String reservoirName, String date, 
-                                                       Double storageMin, Double storageMax, Double totalCapacityMin, Double totalCapacityMax) {
+                                                       Double waterLevelMin, Double waterLevelMax,
+                                                       Double storageMin, Double storageMax, 
+                                                       Double avgInflowMin, Double avgInflowMax,
+                                                       Double avgOutflowMin, Double avgOutflowMax,
+                                                       Double yoyIncreaseMin, Double yoyIncreaseMax,
+                                                       Double totalCapacityMin, Double totalCapacityMax,
+                                                       Double floodLevelMin, Double floodLevelMax) {
         PageHelper.startPage(page, pageSize);
-        List<WaterSituation> list = waterSituationMapper.findByConditions(reservoirName, date, storageMin, storageMax, totalCapacityMin, totalCapacityMax);
+        List<WaterSituation> list = waterSituationMapper.findByConditions(reservoirName, date, 
+                waterLevelMin, waterLevelMax, storageMin, storageMax, avgInflowMin, avgInflowMax,
+                avgOutflowMin, avgOutflowMax, yoyIncreaseMin, yoyIncreaseMax, 
+                totalCapacityMin, totalCapacityMax, floodLevelMin, floodLevelMax);
         return new PageInfo<>(list);
     }
 

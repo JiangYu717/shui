@@ -31,11 +31,24 @@ public class WaterSituationController {
                                          @RequestParam(defaultValue = "10") int pageSize,
                                          @RequestParam(required = false) String reservoirName,
                                          @RequestParam(required = false) String date,
+                                         @RequestParam(required = false) Double waterLevelMin,
+                                         @RequestParam(required = false) Double waterLevelMax,
                                          @RequestParam(required = false) Double storageMin,
                                          @RequestParam(required = false) Double storageMax,
+                                         @RequestParam(required = false) Double avgInflowMin,
+                                         @RequestParam(required = false) Double avgInflowMax,
+                                         @RequestParam(required = false) Double avgOutflowMin,
+                                         @RequestParam(required = false) Double avgOutflowMax,
+                                         @RequestParam(required = false) Double yoyIncreaseMin,
+                                         @RequestParam(required = false) Double yoyIncreaseMax,
                                          @RequestParam(required = false) Double totalCapacityMin,
-                                         @RequestParam(required = false) Double totalCapacityMax) {
-        return waterSituationService.getWaterSituations(page, pageSize, reservoirName, date, storageMin, storageMax, totalCapacityMin, totalCapacityMax);
+                                         @RequestParam(required = false) Double totalCapacityMax,
+                                         @RequestParam(required = false) Double floodLevelMin,
+                                         @RequestParam(required = false) Double floodLevelMax) {
+        return waterSituationService.getWaterSituations(page, pageSize, reservoirName, date, 
+                waterLevelMin, waterLevelMax, storageMin, storageMax, avgInflowMin, avgInflowMax,
+                avgOutflowMin, avgOutflowMax, yoyIncreaseMin, yoyIncreaseMax, 
+                totalCapacityMin, totalCapacityMax, floodLevelMin, floodLevelMax);
     }
 
     @PostMapping("/create")

@@ -21,45 +21,36 @@
       <el-form-item label="日期">
         <el-date-picker v-model="searchForm.date" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" clearable @change="handleSearch" />
       </el-form-item>
-      <el-form-item label="蓄水量范围">
-        <el-input-number 
-          v-model="searchForm.storageMin" 
-          placeholder="最小值" 
-          :min="0" 
-          :step="500"
-          style="width: 120px;"
-          clearable
-        />
-        <span style="margin: 0 8px;">-</span>
-        <el-input-number 
-          v-model="searchForm.storageMax" 
-          placeholder="最大值" 
-          :min="0" 
-          :step="500"
-          style="width: 120px;"
-          clearable
-        />
-        <span style="margin-left: 8px; color: #909399; font-size: 12px;">(万立方米，步长500)</span>
+      <el-form-item label="查询字段">
+        <el-select v-model="selectedField" placeholder="请选择查询字段" @change="handleFieldChange" clearable>
+          <el-option label="库水位" value="waterLevel" />
+          <el-option label="蓄水量" value="storage" />
+          <el-option label="日平均入库流量" value="avgInflow" />
+          <el-option label="日平均出库流量" value="avgOutflow" />
+          <el-option label="比去年同期增减" value="yoyIncrease" />
+          <el-option label="总库容" value="totalCapacity" />
+          <el-option label="汛限水位" value="floodLevel" />
+        </el-select>
       </el-form-item>
-      <el-form-item label="总库容范围">
+      <el-form-item v-if="selectedField" :label="getFieldLabel(selectedField)">
         <el-input-number 
-          v-model="searchForm.totalCapacityMin" 
-          placeholder="最小值" 
+          v-model="searchForm[selectedField + 'Min']" 
+          :placeholder="'最小值'" 
           :min="0" 
-          :step="500"
+          :step="getFieldStep(selectedField)"
           style="width: 120px;"
           clearable
         />
         <span style="margin: 0 8px;">-</span>
         <el-input-number 
-          v-model="searchForm.totalCapacityMax" 
-          placeholder="最大值" 
+          v-model="searchForm[selectedField + 'Max']" 
+          :placeholder="'最大值'" 
           :min="0" 
-          :step="500"
+          :step="getFieldStep(selectedField)"
           style="width: 120px;"
           clearable
         />
-        <span style="margin-left: 8px; color: #909399; font-size: 12px;">(万立方米，步长500)</span>
+        <span style="margin-left: 8px; color: #909399; font-size: 12px;">({{ getFieldUnit(selectedField) }})</span>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -152,12 +143,23 @@ const router = useRouter()
 
 const searchForm = reactive({ 
   reservoirName: '', 
-  date: '', 
+  date: '',
+  waterLevelMin: null,
+  waterLevelMax: null,
   storageMin: null, 
   storageMax: null, 
+  avgInflowMin: null,
+  avgInflowMax: null,
+  avgOutflowMin: null,
+  avgOutflowMax: null,
+  yoyIncreaseMin: null,
+  yoyIncreaseMax: null,
   totalCapacityMin: null, 
-  totalCapacityMax: null 
+  totalCapacityMax: null,
+  floodLevelMin: null,
+  floodLevelMax: null
 })
+const selectedField = ref('')
 const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -218,10 +220,20 @@ function handleSearch() {
     pageSize: pageSize.value,
     reservoirName: searchForm.reservoirName,
     date: searchForm.date,
+    waterLevelMin: searchForm.waterLevelMin,
+    waterLevelMax: searchForm.waterLevelMax,
     storageMin: searchForm.storageMin,
     storageMax: searchForm.storageMax,
+    avgInflowMin: searchForm.avgInflowMin,
+    avgInflowMax: searchForm.avgInflowMax,
+    avgOutflowMin: searchForm.avgOutflowMin,
+    avgOutflowMax: searchForm.avgOutflowMax,
+    yoyIncreaseMin: searchForm.yoyIncreaseMin,
+    yoyIncreaseMax: searchForm.yoyIncreaseMax,
     totalCapacityMin: searchForm.totalCapacityMin,
-    totalCapacityMax: searchForm.totalCapacityMax
+    totalCapacityMax: searchForm.totalCapacityMax,
+    floodLevelMin: searchForm.floodLevelMin,
+    floodLevelMax: searchForm.floodLevelMax
   }).then(res => {
     tableData.value = res.data.list
     total.value = res.data.total
@@ -233,11 +245,89 @@ function handleSearch() {
 function resetSearch() {
   searchForm.reservoirName = ''
   searchForm.date = ''
+  searchForm.waterLevelMin = null
+  searchForm.waterLevelMax = null
   searchForm.storageMin = null
   searchForm.storageMax = null
+  searchForm.avgInflowMin = null
+  searchForm.avgInflowMax = null
+  searchForm.avgOutflowMin = null
+  searchForm.avgOutflowMax = null
+  searchForm.yoyIncreaseMin = null
+  searchForm.yoyIncreaseMax = null
   searchForm.totalCapacityMin = null
   searchForm.totalCapacityMax = null
+  searchForm.floodLevelMin = null
+  searchForm.floodLevelMax = null
+  selectedField.value = ''
   handleSearch()
+}
+
+function handleFieldChange(value) {
+  selectedField.value = value
+}
+
+function getFieldLabel(field) {
+  switch (field) {
+    case 'waterLevel':
+      return '库水位(米)'
+    case 'storage':
+      return '蓄水量(万立方米)'
+    case 'avgInflow':
+      return '日平均入库流量(立方米/秒)'
+    case 'avgOutflow':
+      return '日平均出库流量(立方米/秒)'
+    case 'yoyIncrease':
+      return '比去年同期增减(万立方米)'
+    case 'totalCapacity':
+      return '总库容(万立方米)'
+    case 'floodLevel':
+      return '汛限水位(米)'
+    default:
+      return ''
+  }
+}
+
+function getFieldStep(field) {
+  switch (field) {
+    case 'waterLevel':
+      return 0.1
+    case 'storage':
+      return 1000
+    case 'avgInflow':
+      return 0.1
+    case 'avgOutflow':
+      return 0.1
+    case 'yoyIncrease':
+      return 1000
+    case 'totalCapacity':
+      return 1000
+    case 'floodLevel':
+      return 0.1
+    default:
+      return 1
+  }
+}
+
+function getFieldUnit(field) {
+  switch (field) {
+    case 'waterLevel':
+      return '米'
+    case 'storage':
+      return '万立方米'
+    case 'avgInflow':
+      return '立方米/秒'
+    case 'avgOutflow':
+      return '立方米/秒'
+    case 'yoyIncrease':
+      return '万立方米'
+    case 'totalCapacity':
+      return '万立方米'
+    case 'floodLevel':
+      return '米'
+    default:
+      return ''
+  }
 }
 
 function handleAdd() {

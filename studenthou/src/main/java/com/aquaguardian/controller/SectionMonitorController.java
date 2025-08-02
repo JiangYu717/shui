@@ -38,9 +38,28 @@ public class SectionMonitorController {
                                          @RequestParam(defaultValue = "10") int pageSize,
                                          @RequestParam(required = false) String monitorPointName,
                                          @RequestParam(required = false) String reservoirName,
-                                         @RequestParam(required = false) Integer year,
-                                         @RequestParam(required = false) Integer month) {
-        return sectionMonitorService.getSectionMonitors(page, pageSize, monitorPointName, reservoirName, year, month);
+                                         @RequestParam(required = false) Integer yearMin,
+                                         @RequestParam(required = false) Integer yearMax,
+                                         @RequestParam(required = false) Integer monthMin,
+                                         @RequestParam(required = false) Integer monthMax,
+                                         @RequestParam(required = false) Double oxygenMin,
+                                         @RequestParam(required = false) Double oxygenMax,
+                                         @RequestParam(required = false) Double potassiumPermanganateMin,
+                                         @RequestParam(required = false) Double potassiumPermanganateMax,
+                                         @RequestParam(required = false) Double codMin,
+                                         @RequestParam(required = false) Double codMax,
+                                         @RequestParam(required = false) Double flowMin,
+                                         @RequestParam(required = false) Double flowMax,
+                                         @RequestParam(required = false) Double waterDepthMin,
+                                         @RequestParam(required = false) Double waterDepthMax,
+                                         @RequestParam(required = false) Double totalNitrogenMin,
+                                         @RequestParam(required = false) Double totalNitrogenMax,
+                                         @RequestParam(required = false) Double totalPhosphorusMin,
+                                         @RequestParam(required = false) Double totalPhosphorusMax) {
+        return sectionMonitorService.getSectionMonitors(page, pageSize, monitorPointName, reservoirName, 
+                yearMin, yearMax, monthMin, monthMax, oxygenMin, oxygenMax, potassiumPermanganateMin, potassiumPermanganateMax,
+                codMin, codMax, flowMin, flowMax, waterDepthMin, waterDepthMax, 
+                totalNitrogenMin, totalNitrogenMax, totalPhosphorusMin, totalPhosphorusMax);
     }
 
     @PostMapping("/create")
