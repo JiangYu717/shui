@@ -301,7 +301,7 @@ public class SectionMonitorServiceImpl implements SectionMonitorService {
     private void exportToExcel(String filePath, List<SectionMonitor> list) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("监测断面数据");
-            String[] headers = {"监测点名称", "水库名称", "年份", "月份", "氧气(mg/l)", "高锰酸盐(mg/l)", "化学需氧量(mg/l)", "流量(m³/s)", "水深(m)", "总氮(mg/l)", "总磷(mg/l)"};
+            String[] headers = {"监测点名称", "水库名称", "年份", "月份", "氨氮(mg/l)", "高锰酸盐(mg/l)", "化学需氧量(mg/l)", "流量(m³/s)", "水深(m)", "总氮(mg/l)", "总磷(mg/l)"};
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 sheet.setColumnWidth(i, 20 * 256);
