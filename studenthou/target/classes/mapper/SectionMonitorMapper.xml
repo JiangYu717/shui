@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aquaguardian.mapper.SectionMonitorMapper">
+  <select id="findAll" resultType="com.aquaguardian.entity.SectionMonitor">
+    SELECT * FROM section_monitor ORDER BY id DESC
+  </select>
+
+  <select id="findById" resultType="com.aquaguardian.entity.SectionMonitor" parameterType="long">
+    SELECT * FROM section_monitor WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.aquaguardian.entity.SectionMonitor">
+    INSERT INTO section_monitor
+      (monitor_point_name, reservoir_name, year, month, oxygen, potassium_permanganate, cod, flow, water_depth, total_nitrogen, total_phosphorus)
+    VALUES
+      (#{monitorPointName}, #{reservoirName}, #{year}, #{month}, #{oxygen}, #{potassiumPermanganate}, #{cod}, #{flow}, #{waterDepth}, #{totalNitrogen}, #{totalPhosphorus})
+  </insert>
+
+  <update id="update" parameterType="com.aquaguardian.entity.SectionMonitor">
+    UPDATE section_monitor
+    SET monitor_point_name = #{monitorPointName},
+        reservoir_name = #{reservoirName},
+        year = #{year},
+        month = #{month},
+        oxygen = #{oxygen},
+        potassium_permanganate = #{potassiumPermanganate},
+        cod = #{cod},
+        flow = #{flow},
+        water_depth = #{waterDepth},
+        total_nitrogen = #{totalNitrogen},
+        total_phosphorus = #{totalPhosphorus}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteById" parameterType="long">
+    DELETE FROM section_monitor WHERE id = #{id}
+  </delete>
+
+  <select id="findByConditions" resultType="com.aquaguardian.entity.SectionMonitor">
+    SELECT * FROM section_monitor
+    <where>
+      <if test="monitorPointName != null and monitorPointName != ''">
+        AND monitor_point_name LIKE CONCAT('%', #{monitorPointName}, '%')
+      </if>
+      <if test="reservoirName != null and reservoirName != ''">
+        AND reservoir_name LIKE CONCAT('%', #{reservoirName}, '%')
+      </if>
+      <if test="yearMin != null">
+        AND year >= #{yearMin}
+      </if>
+      <if test="yearMax != null">
+        AND year &lt;= #{yearMax}
+      </if>
+      <if test="monthMin != null">
+        AND month >= #{monthMin}
+      </if>
+      <if test="monthMax != null">
+        AND month &lt;= #{monthMax}
+      </if>
+      <if test="oxygenMin != null">
+        AND oxygen >= #{oxygenMin}
+      </if>
+      <if test="oxygenMax != null">
+        AND oxygen &lt;= #{oxygenMax}
+      </if>
+      <if test="potassiumPermanganateMin != null">
+        AND potassium_permanganate >= #{potassiumPermanganateMin}
+      </if>
+      <if test="potassiumPermanganateMax != null">
+        AND potassium_permanganate &lt;= #{potassiumPermanganateMax}
+      </if>
+      <if test="codMin != null">
+        AND cod >= #{codMin}
+      </if>
+      <if test="codMax != null">
+        AND cod &lt;= #{codMax}
+      </if>
+      <if test="flowMin != null">
+        AND flow >= #{flowMin}
+      </if>
+      <if test="flowMax != null">
+        AND flow &lt;= #{flowMax}
+      </if>
+      <if test="waterDepthMin != null">
+        AND water_depth >= #{waterDepthMin}
+      </if>
+      <if test="waterDepthMax != null">
+        AND water_depth &lt;= #{waterDepthMax}
+      </if>
+      <if test="totalNitrogenMin != null">
+        AND total_nitrogen >= #{totalNitrogenMin}
+      </if>
+      <if test="totalNitrogenMax != null">
+        AND total_nitrogen &lt;= #{totalNitrogenMax}
+      </if>
+      <if test="totalPhosphorusMin != null">
+        AND total_phosphorus >= #{totalPhosphorusMin}
+      </if>
+      <if test="totalPhosphorusMax != null">
+        AND total_phosphorus &lt;= #{totalPhosphorusMax}
+      </if>
+    </where>
+    ORDER BY id DESC
+  </select>
+  
+  <!-- 检查监测点名称是否存在（同一水库下） -->
+  <select id="countByMonitorPointName" resultType="int" parameterType="map">
+    SELECT COUNT(*) FROM section_monitor WHERE monitor_point_name = #{monitorPointName} AND reservoir_name = #{reservoirName}
+  </select>
+  
+  <!-- 批量插入 -->
+  <insert id="batchInsert" parameterType="java.util.List">
+    INSERT INTO section_monitor
+      (monitor_point_name, reservoir_name, year, month, oxygen, potassium_permanganate, cod, flow, water_depth, total_nitrogen, total_phosphorus)
+    VALUES
+    <foreach collection="list" item="item" separator=",">
+      (#{item.monitorPointName}, #{item.reservoirName}, #{item.year}, #{item.month}, #{item.oxygen}, #{item.potassiumPermanganate}, #{item.cod}, #{item.flow}, #{item.waterDepth}, #{item.totalNitrogen}, #{item.totalPhosphorus})
+    </foreach>
+  </insert>
+</mapper> 
